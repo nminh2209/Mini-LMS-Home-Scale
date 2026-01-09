@@ -1,25 +1,28 @@
 import { useState, useEffect } from "react";
-import { Plus, GraduationCap, LogOut, Loader2 } from "lucide-react";
+import { Plus, GraduationCap, Loader2 } from "lucide-react";
 import { ClassCard } from "./components/ClassCard";
 import { ClassDetail } from "./components/ClassDetail";
+import { AdminDashboard } from "../components/admin/AdminDashboard";
+import { StudentDashboard } from "../components/student/StudentDashboard";
+import { TuitionManager } from "../components/tuition/TuitionManager";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../contexts/AuthContext";
 import { Login } from "../components/auth/Login";
-
-interface ClassData {
-  id: string;
-  name: string;
-  schedule: string;
-  level: string;
-  created_at?: string;
-}
+import { AppLayout } from "../components/layout/AppLayout";
+import { Class } from "../types/database"; // Use shared type
 
 export default function App() {
-  const { user, signOut, loading: authLoading } = useAuth();
-  const [classes, setClasses] = useState<ClassData[]>([]);
-  const [students, setStudents] = useState<any[]>([]);
-  const [selectedClass, setSelectedClass] = useState<ClassData | null>(null);
+  const { user, profile, loading: authLoading } = useAuth();
+
+  // Navigation State
+  const [currentView, setCurrentView] = useState("dashboard"); // 'dashboard', 'courses', 'calendar', 'inbox'
+
+  // Data State
+  const [classes, setClasses] = useState<Class[]>([]);
+  const [selectedClass, setSelectedClass] = useState<Class | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // UI State
   const [showAddForm, setShowAddForm] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -27,10 +30,39 @@ export default function App() {
     level: "",
   });
 
+  // Schedule Picker State
+  const [selectedDays, setSelectedDays] = useState<string[]>([]);
+  const [selectedTime, setSelectedTime] = useState("");
+  const daysOfWeek = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
+
+  // Update string schedule when day/time changes
+  useEffect(() => {
+    if (showAddForm) {
+      if (selectedDays.length > 0 && selectedTime) {
+        setFormData(prev => ({ ...prev, schedule: `${selectedDays.join('/')} - ${selectedTime}` }));
+      } else {
+        // If user wipes selection, we don't necessarily want to wipe custom text if they typed it manually, 
+        // but here we are ENFORCING the picker, so we update it.
+        // Actually let's only update if they interact with picker.
+        // For now, simple: Check if either is set.
+        if (selectedDays.length > 0 || selectedTime) {
+          setFormData(prev => ({ ...prev, schedule: `${selectedDays.join('/')} ${selectedTime ? '- ' + selectedTime : ''}` }));
+        }
+      }
+    }
+  }, [selectedDays, selectedTime]);
+
+  const toggleDay = (day: string) => {
+    setSelectedDays(prev =>
+      prev.includes(day)
+        ? prev.filter(d => d !== day)
+        : [...prev, day].sort((a, b) => daysOfWeek.indexOf(a) - daysOfWeek.indexOf(b))
+    );
+  };
+
   useEffect(() => {
     if (user) {
       fetchClasses();
-      fetchStudents();
     }
   }, [user]);
 
@@ -47,19 +79,6 @@ export default function App() {
       console.error("Error fetching classes:", error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const fetchStudents = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('students')
-        .select('*');
-
-      if (error) throw error;
-      setStudents(data || []);
-    } catch (error) {
-      console.error("Error fetching students:", error);
     }
   };
 
@@ -84,7 +103,11 @@ export default function App() {
       if (data) {
         setClasses([data, ...classes]);
         setShowAddForm(false);
+        setClasses([data, ...classes]);
+        setShowAddForm(false);
         setFormData({ name: "", schedule: "", level: "" });
+        setSelectedDays([]);
+        setSelectedTime("");
       }
     } catch (error) {
       console.error("Error creating class:", error);
@@ -92,9 +115,15 @@ export default function App() {
     }
   };
 
-  const getStudentCount = (classId: string) => {
-    return students.filter(s => s.class_id === classId).length;
+  const handleNavigate = (view: string) => {
+    // If navigating away from courses, deselect class
+    if (view !== 'courses') {
+      setSelectedClass(null);
+    }
+    setCurrentView(view);
   };
+
+  // -- RENDER HELPERS --
 
   if (authLoading) {
     return (
@@ -108,163 +137,189 @@ export default function App() {
     return <Login />;
   }
 
+  // View: Class Detail (When a class is selected)
   if (selectedClass) {
     return (
-      <ClassDetail
-        classData={selectedClass}
-        onBack={() => {
-          setSelectedClass(null);
-          // Refresh data when returning from detail view
-          fetchClasses();
-          fetchStudents();
-        }}
-      />
+      <AppLayout currentView="courses" onNavigate={handleNavigate} title={selectedClass.name}>
+        <ClassDetail
+          classData={selectedClass}
+          onBack={() => {
+            setSelectedClass(null);
+            fetchClasses(); // Refresh data
+          }}
+        />
+      </AppLayout>
     );
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <GraduationCap className="w-8 h-8 text-blue-600" />
+  // -- ROLE BASED ROUTING --
+
+  // 1. Student View
+  if (user && profile?.role === 'student') {
+    return (
+      <AppLayout currentView="dashboard" onNavigate={handleNavigate} title="Bảng Điều Khiển Học Viên">
+        <StudentDashboard />
+      </AppLayout>
+    )
+  }
+
+  // 2. Admin View (Explicit choice)
+  if (currentView === "admin") {
+    return (
+      <AppLayout currentView="admin" onNavigate={handleNavigate} title="Quản Trị Hệ Thống">
+        <AdminDashboard />
+      </AppLayout>
+    );
+  }
+
+  // 3. Teacher View (Default for Teacher/Admin)
+
+  if (currentView === "tuition") {
+    return (
+      <AppLayout currentView="tuition" onNavigate={handleNavigate} title="Quản Lý Học Phí">
+        <TuitionManager />
+      </AppLayout>
+    );
+  }
+
+  // View: Dashboard / Courses List
+  if (currentView === "dashboard" || currentView === "courses") {
+    return (
+      <AppLayout currentView={currentView} onNavigate={handleNavigate} title="Tổng Quan">
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Quản lý Lớp học</h1>
-              <p className="text-sm text-gray-600">Hệ thống quản lý học viên & điểm danh</p>
+              <h1 className="text-2xl font-bold text-gray-900">Chào mừng trở lại!</h1>
+              <p className="text-gray-500">Bạn đang có {classes.length} lớp học đang hoạt động.</p>
             </div>
-          </div>
-          <div className="flex items-center gap-4">
             <button
               onClick={() => setShowAddForm(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+              className="flex items-center gap-2 px-4 py-2 bg-[#0984E3] text-white rounded-lg hover:bg-blue-600 transition-colors shadow-sm font-medium"
             >
               <Plus className="w-5 h-5" />
-              Tạo lớp mới
+              Tạo Lớp Mới
             </button>
-            <button
-              onClick={signOut}
-              className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-              title="Sign Out"
-            >
-              <LogOut className="w-5 h-5" />
-            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {classes.map((classData) => (
+              <ClassCard
+                key={classData.id}
+                classData={classData}
+                studentCount={0} // TODO: Fetch count separately or join
+                onClick={() => setSelectedClass(classData)}
+              />
+            ))}
+
+            {classes.length === 0 && !loading && (
+              <div className="col-span-full py-12 text-center border-2 border-dashed border-gray-200 rounded-xl bg-gray-50">
+                <GraduationCap className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                <h3 className="text-lg font-medium text-gray-900">Chưa có lớp học nào</h3>
+                <p className="text-gray-500">Hãy tạo lớp học đầu tiên của bạn để bắt đầu.</p>
+              </div>
+            )}
           </div>
         </div>
-      </div>
 
-      {/* Add Class Form Modal */}
-      {showAddForm && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-xl p-6 max-w-md w-full animate-in fade-in zoom-in duration-200">
-            <h3 className="text-xl font-bold text-gray-900 mb-1">Tạo lớp học mới</h3>
-            <p className="text-gray-500 text-sm mb-6">Nhập thông tin lớp học của bạn</p>
+        {/* Add Class Modal - keeping it simple for now */}
+        {showAddForm && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[60]">
+            <div className="bg-white rounded-xl shadow-xl p-6 max-w-md w-full animate-in fade-in zoom-in duration-200">
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Tạo Lớp Học Mới</h3>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Tên Lớp</label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                    placeholder="VD: Tiếng Anh 12 - Nâng cao"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Lịch Học</label>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Tên lớp *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                  placeholder="Ví dụ: English Grade 10"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Lịch học *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.schedule}
-                  onChange={(e) => setFormData({ ...formData, schedule: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                  placeholder="Ví dụ: Thứ 2/4 - 6:00 PM"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Cấp độ *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.level}
-                  onChange={(e) => setFormData({ ...formData, level: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                  placeholder="Ví dụ: IELTS Foundation"
-                />
-              </div>
-              <div className="flex gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => setShowAddForm(false)}
-                  className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors"
-                >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  Tạo lớp
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+                  {/* Day Picker */}
+                  <div className="flex gap-2 mb-3 overflow-x-auto pb-2">
+                    {daysOfWeek.map(day => (
+                      <button
+                        key={day}
+                        type="button"
+                        onClick={() => toggleDay(day)}
+                        className={`
+                            w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all border
+                            ${selectedDays.includes(day)
+                            ? 'bg-blue-600 text-white border-blue-600 shadow-md scale-105'
+                            : 'bg-white text-gray-600 border-gray-200 hover:border-blue-400 hover:bg-blue-50'}
+                          `}
+                      >
+                        {day}
+                      </button>
+                    ))}
+                  </div>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        {loading ? (
-          <div className="flex flex-col items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-blue-600 mb-4" />
-            <p className="text-gray-500">Đang tải dữ liệu...</p>
-          </div>
-        ) : classes.length === 0 ? (
-          <div className="text-center py-16 bg-white rounded-2xl border border-dashed border-gray-300">
-            <div className="inline-flex p-4 bg-gray-50 rounded-full mb-4">
-              <GraduationCap className="w-8 h-8 text-gray-400" />
-            </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">
-              Chưa có lớp học nào
-            </h3>
-            <p className="text-gray-500 mb-6 max-w-sm mx-auto">
-              Bắt đầu hành trình giảng dạy của bạn bằng cách tạo lớp học đầu tiên.
-            </p>
-            <button
-              onClick={() => setShowAddForm(true)}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-            >
-              <Plus className="w-5 h-5" />
-              Tạo lớp mới
-            </button>
-          </div>
-        ) : (
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <span className="w-2 h-6 bg-blue-600 rounded-full"></span>
-              Tất cả lớp học ({classes.length})
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {classes.map((classData) => (
-                <ClassCard
-                  key={classData.id}
-                  classData={classData}
-                  studentCount={getStudentCount(classData.id)}
-                  onClick={() => setSelectedClass(classData)}
-                />
-              ))}
+                  {/* Time Picker */}
+                  <div className="relative">
+                    <input
+                      type="time"
+                      value={selectedTime}
+                      onChange={(e) => setSelectedTime(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                    />
+                    <div className="text-xs text-gray-500 mt-1 pl-1">
+                      Kết quả: {formData.schedule || "(Chọn ngày và giờ)"}
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Cấp Độ / Khối Lớp</label>
+                  <input
+                    type="text"
+                    value={formData.level}
+                    onChange={(e) => setFormData({ ...formData, level: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                    placeholder="VD: IELTS 5.0"
+                  />
+                </div>
+                <div className="flex gap-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowAddForm(false)}
+                    className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200"
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 px-4 py-2 bg-[#0984E3] text-white font-medium rounded-lg hover:bg-blue-600"
+                  >
+                    Tạo Lớp
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         )}
+      </AppLayout>
+    );
+  }
+
+  // Placeholder for other views
+  return (
+    <AppLayout currentView={currentView} onNavigate={handleNavigate} title={currentView.charAt(0).toUpperCase() + currentView.slice(1)}>
+      <div className="flex flex-col items-center justify-center py-20 text-center">
+        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+          {currentView === 'calendar' ? <div className="text-4xl">📅</div> : <div className="text-4xl">📫</div>}
+        </div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">
+          Tính năng đang phát triển
+        </h2>
+        <p className="text-gray-500 max-w-md">
+          Chức năng này sẽ sớm ra mắt trong các phiên bản tiếp theo!
+        </p>
       </div>
-    </div>
+    </AppLayout>
   );
 }

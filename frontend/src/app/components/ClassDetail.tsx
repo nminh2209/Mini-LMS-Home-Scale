@@ -9,17 +9,15 @@ interface ClassDetailProps {
   classData: {
     id: string;
     name: string;
-    schedule: string;
-    level: string;
+    schedule: string | null;
+    level: string | null;
   };
   onBack: () => void;
-  apiUrl: string;
-  apiKey: string;
 }
 
 type Tab = "students" | "attendance" | "assignments" | "vocabulary";
 
-export function ClassDetail({ classData, onBack, apiUrl, apiKey }: ClassDetailProps) {
+export function ClassDetail({ classData, onBack }: ClassDetailProps) {
   const [activeTab, setActiveTab] = useState<Tab>("students");
 
   const tabs = [
@@ -54,11 +52,10 @@ export function ClassDetail({ classData, onBack, apiUrl, apiKey }: ClassDetailPr
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm whitespace-nowrap transition-colors ${
-                  activeTab === tab.id
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm whitespace-nowrap transition-colors ${activeTab === tab.id
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
               >
                 <Icon className="w-4 h-4" />
                 {tab.label}
@@ -71,16 +68,16 @@ export function ClassDetail({ classData, onBack, apiUrl, apiKey }: ClassDetailPr
       {/* Content */}
       <div className="flex-1 overflow-auto p-6">
         {activeTab === "students" && (
-          <StudentList classId={classData.id} apiUrl={apiUrl} apiKey={apiKey} />
+          <StudentList classId={classData.id} />
         )}
         {activeTab === "attendance" && (
-          <AttendanceView classId={classData.id} apiUrl={apiUrl} apiKey={apiKey} />
+          <AttendanceView classId={classData.id} />
         )}
         {activeTab === "assignments" && (
-          <AssignmentList classId={classData.id} apiUrl={apiUrl} apiKey={apiKey} />
+          <AssignmentList classId={classData.id} />
         )}
         {activeTab === "vocabulary" && (
-          <VocabularyList classId={classData.id} apiUrl={apiUrl} apiKey={apiKey} />
+          <VocabularyList classId={classData.id} />
         )}
       </div>
     </div>

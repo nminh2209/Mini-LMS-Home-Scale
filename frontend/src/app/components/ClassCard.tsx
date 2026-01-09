@@ -4,8 +4,8 @@ interface ClassCardProps {
   classData: {
     id: string;
     name: string;
-    schedule: string;
-    level: string;
+    schedule: string | null;
+    level: string | null;
   };
   studentCount: number;
   onClick: () => void;
@@ -13,7 +13,7 @@ interface ClassCardProps {
 
 export function ClassCard({ classData, studentCount, onClick }: ClassCardProps) {
   return (
-    <div 
+    <div
       onClick={onClick}
       className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 cursor-pointer hover:shadow-md transition-shadow"
     >
@@ -26,7 +26,7 @@ export function ClassCard({ classData, studentCount, onClick }: ClassCardProps) 
           </div>
         </div>
       </div>
-      
+
       <div className="space-y-2">
         <div className="flex items-center gap-2 text-sm text-gray-600">
           <Calendar className="w-4 h-4" />

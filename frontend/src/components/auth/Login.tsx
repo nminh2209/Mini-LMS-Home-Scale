@@ -58,23 +58,23 @@ export function Login() {
                         <GraduationCap className="w-8 h-8 text-blue-600" />
                     </div>
                     <h1 className="text-2xl font-bold text-gray-900">
-                        {isSignUp ? 'New Teacher' : 'Teacher Login'}
+                        {isSignUp ? 'Đăng Ký Giáo Viên' : 'Đăng Nhập'}
                     </h1>
                     <p className="text-gray-500">
-                        {isSignUp ? 'Create a username to start' : 'Enter your credentials'}
+                        {isSignUp ? 'Tạo tài khoản để bắt đầu' : 'Nhập thông tin xác thực của bạn'}
                     </p>
                 </div>
 
                 <form onSubmit={handleAuth} className="space-y-4">
                     <div className="space-y-2">
                         <label htmlFor="username" className="text-sm font-medium text-gray-700 block">
-                            Username
+                            Tên đăng nhập
                         </label>
                         <div className="relative">
                             <input
                                 id="username"
                                 type="text"
-                                placeholder="e.g. teacher1"
+                                placeholder="VD: giaovien1"
                                 value={username}
                                 onChange={(e) => setUsername(e.target.value)}
                                 required
@@ -86,7 +86,7 @@ export function Login() {
 
                     <div className="space-y-2">
                         <label htmlFor="password" className="text-sm font-medium text-gray-700 block">
-                            Password
+                            Mật khẩu
                         </label>
                         <div className="relative">
                             <input
@@ -106,15 +106,15 @@ export function Login() {
                                 onClick={() => setShowPassword(!showPassword)}
                                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                             >
-                                <span className="sr-only">Toggle password visibility</span>
+                                <span className="sr-only">Hiển thị mật khẩu</span>
                             </button>
                         </div>
                     </div>
 
                     {message && (
                         <div className={`p-4 rounded-lg text-sm ${message.type === 'success'
-                                ? 'bg-green-50 text-green-700 border border-green-100'
-                                : 'bg-red-50 text-red-700 border border-red-100'
+                            ? 'bg-green-50 text-green-700 border border-green-100'
+                            : 'bg-red-50 text-red-700 border border-red-100'
                             }`}>
                             {message.text}
                         </div>
@@ -128,10 +128,10 @@ export function Login() {
                         {loading ? (
                             <>
                                 <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                                Processing...
+                                Đang xử lý...
                             </>
                         ) : (
-                            <>{isSignUp ? 'Sign Up' : 'Sign In'}</>
+                            <>{isSignUp ? 'Đăng Ký' : 'Đăng Nhập'}</>
                         )}
                     </button>
                 </form>
@@ -141,7 +141,7 @@ export function Login() {
                         onClick={() => setIsSignUp(!isSignUp)}
                         className="text-sm text-blue-600 hover:text-blue-700 font-medium"
                     >
-                        {isSignUp ? 'Back to Login' : 'Create an account'}
+                        {isSignUp ? 'Quay lại Đăng nhập' : 'Chưa có tài khoản? Tạo mới'}
                     </button>
                 </div>
             </div>
