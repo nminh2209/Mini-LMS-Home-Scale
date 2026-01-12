@@ -8,7 +8,8 @@ import {
     Menu,
     X,
     GraduationCap,
-    DollarSign
+    DollarSign,
+    UserCheck
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -25,6 +26,7 @@ export function Sidebar({ currentView, onNavigate, isMobileMenuOpen, setIsMobile
     const navItems = [
         { id: 'dashboard', label: 'Bảng tin', icon: LayoutDashboard },
         { id: 'courses', label: 'Lớp học', icon: BookOpen },
+        { id: 'attendance', label: 'Điểm danh', icon: UserCheck },
         { id: 'tuition', label: 'Học phí', icon: DollarSign },
         { id: 'calendar', label: 'Lịch biểu', icon: Calendar },
         { id: 'inbox', label: 'Hộp thư', icon: Inbox },

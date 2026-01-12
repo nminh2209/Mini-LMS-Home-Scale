@@ -11,6 +11,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { Login } from "../components/auth/Login";
 import { AppLayout } from "../components/layout/AppLayout";
 import { OrchestrationOverview } from "./components/OrchestrationOverview";
+import { AttendanceManager } from "../components/attendance/AttendanceManager";
 import { Class } from "../types/database"; // Use shared type
 
 export default function App() {
@@ -180,6 +181,14 @@ export default function App() {
     return (
       <AppLayout currentView="tuition" onNavigate={handleNavigate} title="Quản Lý Học Phí">
         <TuitionManager />
+      </AppLayout>
+    );
+  }
+
+  if (currentView === "attendance") {
+    return (
+      <AppLayout currentView="attendance" onNavigate={handleNavigate} title="Điểm Danh Học Viên">
+        <AttendanceManager />
       </AppLayout>
     );
   }
