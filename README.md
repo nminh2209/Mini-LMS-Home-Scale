@@ -1,25 +1,38 @@
 # Mini-LMS-Home-Scale 🏫
 
-A lightweight, robust Learning Management System (LMS) designed for home-based English classes ("Lớp học thêm"). It combines a "Traditional Vietnamese Classroom" aesthetic with modern digital tools.
+A professional, robust Learning Management System (LMS) designed for home-based English classes ("Lớp học thêm"). It combines a "Traditional Vietnamese Classroom" (Chalkboard) aesthetic with modern digital tools for tracking student progress.
 
-## 🌟 Features
+## 🌟 Key Features
 
-*   **Class Management**: Organize students into classes (e.g., "Grade 10 - Mon/Wed").
-*   **Student Profiles**: Manage contact info, parent details, and notes.
-*   **Digital Attendance**: Track presence (Present/Late/Absent) with a single click.
-*   **Tuition Tracking**: Record monthly fee payments.
-*   **Learning Tools**:
-    *   **Assignments**: Create and track homework with due dates.
-    *   **Vocabulary**: Build weekly word lists with definitions and examples.
-*   **Authentication**: Secure login with simple usernames (e.g., `admin`).
+*   **Vietnamese-First UI**: Fully localized interface in Vietnamese (`Tiếng Việt`).
+*   **Role-Based Access (RBAC)**:
+    *   **Admin**: Total system oversight and user role management.
+    *   **Teacher**: Manage classes, attendance, students, and tuition.
+    *   **Student**: View enrolled classes, homework, and own tuition status.
+*   **Visual Schedule & Calendar**: 
+    *   **Day/Time Picker**: Intelligent class creation with a visual scheduler.
+    *   **Weekly Calendar**: Real-time sync with actual dates (e.g., T2 12/01) and click-to-open class functionality.
+*   **Tuition Management**: 
+    *   Create and track tuition requests by period (e.g., "Tháng 01/2026").
+    *   Mark as paid and manage overdue status.
+    *   Dedicated "Học Phí" board for overall tracking.
+*   **Class Dashboard**:
+    *   One-click Attendance tracking (Present/Absent/Late).
+    *   Assignment management with due dates.
+    *   Weekly Vocabulary lists.
+*   **Security & Deletion**: Integrated "Delete" protections for classes, students, and tuition records.
 
 ## 🛠️ Technology Stack
 
-*   **Frontend**: React 18, Vite, TypeScript, TailwindCSS v4, Radix UI.
-*   **Backend**: Supabase (PostgreSQL, Auth).
-*   **Hosting**: Vercel (Frontend), Supabase (Backend).
+*   **Frontend**: React 18, Vite, TypeScript.
+*   **Styling**: **TailwindCSS v4**, Radix UI (Headless components).
+*   **Backend**: **Supabase** (PostgreSQL, Realtime, Auth).
+*   **Icons**: Lucide React.
+*   **Date Operations**: `date-fns`.
 
-## 🚀 Quick Start (Local Development)
+## 🚀 Getting Started
+
+### Local Development
 
 1.  **Clone & Setup**
     ```bash
@@ -29,26 +42,32 @@ A lightweight, robust Learning Management System (LMS) designed for home-based E
     ```
 
 2.  **Environment Variables**
-    Ensure you have a `.env` file in the `frontend` directory with your Supabase credentials:
+    Create a `.env` file in the `frontend` folder:
     ```
     VITE_SUPABASE_URL=https://goylrgwjkfvalxarzvub.supabase.co
-    VITE_SUPABASE_ANON_KEY=your_anon_key_here
+    VITE_SUPABASE_ANON_KEY=...your_anon_key...
     ```
 
-3.  **Run the App**
+3.  **Run**
     ```bash
     npm run dev
     ```
-    Open [http://localhost:5173](http://localhost:5173) to view it.
 
-## 📚 Documentation & Guides
+## 🛡️ Security & Database
 
-*   **[Deployment Guide](DEPLOY.md)**: How to publish this app to the internet (Vercel).
-*   **[Database Guide](DATABASE_GUIDE.md)**: How to safely update the database and recover data.
-*   **[Frontend Details](frontend/README.md)**: Specifics about the UI structure.
+### Security Audit
+We maintain a strict **Row Level Security (RLS)** model. 
+*   Students can ONLY see their own data.
+*   Teachers manage only THEIR classes.
+*   Admins manage all system profiles.
 
-## 🛡️ Database Management
+For details, see **[SECURITY_AUDIT.md](SECURITY_AUDIT.md)**.
 
-> **Important**: Do NOT run the `initial_schema.sql` file on a production database as it will delete data.
+### Database Updates
+> [!CAUTION]
+> Avoid running `initial_schema.sql` on live data. Use scripts in `backend/updates/` for safe migrations.
 
-To make changes to the database (e.g., adding columns), please follow the instructions in **[DATABASE_GUIDE.md](DATABASE_GUIDE.md)**.
+## 📚 Guides
+*   **[Deployment Guide](DEPLOY.md)**: Hosting on Vercel.
+*   **[Database Guide](DATABASE_GUIDE.md)**: Manual SQL updates.
+*   **[Security Audit](SECURITY_AUDIT.md)**: Potential risks and mitigations.
