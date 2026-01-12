@@ -110,3 +110,18 @@ export interface QuizAttempt {
     completed_at: string | null;
     answers: Record<string, any> | null;
 }
+
+export interface Tuition {
+    id: string;
+    class_id: string;
+    student_id: string;
+    amount: number;
+    period: string;
+    status: 'pending' | 'paid' | 'overdue';
+    due_date: string | null;
+    paid_at: string | null;
+    note: string | null;
+    created_at: string;
+    classes?: Class;
+    students?: Student;
+}

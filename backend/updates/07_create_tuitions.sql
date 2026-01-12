@@ -1,8 +1,14 @@
--- 07_create_tuitions.sql
+-- 07_create_tuitions.sql (Revised)
 -- New Module: Tuition Management (Quản lý học phí)
 
-create type public.tuition_status as enum ('pending', 'paid', 'overdue');
+-- 1. Safely create Enum (Ignore if exists)
+DO $$ begin
+    create type public.tuition_status as enum ('pending', 'paid', 'overdue');
+exception
+    when duplicate_object then null;
+end $$;
 
+-- 2. Create Table
 create table if not exists public.tuitions (
   id uuid default gen_random_uuid() primary key,
   class_id uuid references public.classes(id) on delete cascade not null,
@@ -16,8 +22,12 @@ create table if not exists public.tuitions (
   created_at timestamptz default now()
 );
 
--- RLS Policies
+-- 3. RLS Policies
 alter table public.tuitions enable row level security;
+
+-- Drop existing policies to prevent "policy already exists" errors if re-running
+drop policy if exists "Teachers/Admins manage tuitions" on public.tuitions;
+drop policy if exists "Students view own tuitions" on public.tuitions;
 
 -- Admins and Teachers can view/edit all tuitions
 create policy "Teachers/Admins manage tuitions"

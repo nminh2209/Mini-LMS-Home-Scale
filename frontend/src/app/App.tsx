@@ -5,6 +5,7 @@ import { ClassDetail } from "./components/ClassDetail";
 import { AdminDashboard } from "../components/admin/AdminDashboard";
 import { StudentDashboard } from "../components/student/StudentDashboard";
 import { TuitionManager } from "../components/tuition/TuitionManager";
+import { CalendarView } from "../components/calendar/CalendarView";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../contexts/AuthContext";
 import { Login } from "../components/auth/Login";
@@ -178,6 +179,14 @@ export default function App() {
     return (
       <AppLayout currentView="tuition" onNavigate={handleNavigate} title="Quản Lý Học Phí">
         <TuitionManager />
+      </AppLayout>
+    );
+  }
+
+  if (currentView === "calendar") {
+    return (
+      <AppLayout currentView="calendar" onNavigate={handleNavigate} title="Lịch Dạy">
+        <CalendarView onSelectClass={setSelectedClass} />
       </AppLayout>
     );
   }

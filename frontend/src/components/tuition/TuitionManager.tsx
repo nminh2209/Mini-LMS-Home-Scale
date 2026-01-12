@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
 import { Class, Student, Tuition } from "../../types/database";
-import { Loader2, DollarSign, CheckCircle, Clock, Plus, Filter, Search } from "lucide-react";
+import { Loader2, DollarSign, CheckCircle, Clock, Plus, Filter, Search, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 
 export function TuitionManager() {
@@ -43,7 +43,7 @@ export function TuitionManager() {
                 .select(`
           *,
           classes (name),
-          students (full_name)
+          students (name)
         `)
                 .order('created_at', { ascending: false });
 
@@ -163,7 +163,7 @@ export function TuitionManager() {
                                     <span className="text-xs text-gray-400 font-mono">{format(new Date(t.created_at), 'dd/MM/yyyy')}</span>
                                 </div>
                                 <h3 className="font-bold text-lg text-gray-900">
-                                    {(t.students as any)?.full_name || "Học viên ẩn"}
+                                    {(t.students as any)?.name || "Học viên ẩn"}
                                 </h3>
                                 <p className="text-sm text-gray-500 mb-4">
                                     {(t.classes as any)?.name} • {t.period}
@@ -182,6 +182,21 @@ export function TuitionManager() {
                                     Xác nhận đã thu
                                 </button>
                             )}
+
+                            <div className="flex justify-end mt-2">
+                                <button
+                                    onClick={async () => {
+                                        if (!confirm("Bạn có chắc muốn xóa phiếu thu này?")) return;
+                                        const { error } = await supabase.from('tuitions').delete().eq('id', t.id);
+                                        if (error) alert("Lỗi khi xóa!");
+                                        else fetchTuitions();
+                                    }}
+                                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                    title="Xóa phiếu thu"
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                </button>
+                            </div>
                         </div>
                     ))}
 
@@ -222,7 +237,7 @@ export function TuitionManager() {
                                         required
                                     >
                                         <option value="">-- Chọn học viên --</option>
-                                        {students.map(s => <option key={s.id} value={s.id}>{s.full_name || "Chưa đặt tên"}</option>)}
+                                        {students.map(s => <option key={s.id} value={s.id}>{s.name || "Chưa đặt tên"}</option>)}
                                     </select>
                                 </div>
                             )}

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Plus, UserPlus, ClipboardList, BookOpen, Award } from "lucide-react";
+import { ArrowLeft, Plus, UserPlus, ClipboardList, BookOpen, Award, Trash2 } from "lucide-react";
+import { supabase } from "../../lib/supabase";
 import { AttendanceView } from "./AttendanceView";
 import { StudentList } from "./StudentList";
 import { AssignmentList } from "./AssignmentList";
@@ -43,6 +44,24 @@ export function ClassDetail({ classData, onBack }: ClassDetailProps) {
             <p className="text-sm text-gray-600">{classData.schedule} • {classData.level}</p>
           </div>
         </div>
+
+        <button
+          onClick={async () => {
+            const confirmed = window.confirm(`CẢNH BÁO: Xóa lớp "${classData.name}"?\nToàn bộ dữ liệu của lớp này sẽ bị xóa vĩnh viễn.`);
+            if (!confirmed) return;
+
+            const { error } = await supabase.from('classes').delete().eq('id', classData.id);
+            if (error) {
+              alert("Lỗi khi xóa lớp: " + error.message);
+            } else {
+              onBack();
+            }
+          }}
+          className="flex items-center gap-2 px-3 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 font-medium transition-colors text-sm absolute top-4 right-6"
+        >
+          <Trash2 className="w-4 h-4" />
+          Xóa Lớp
+        </button>
 
         {/* Tabs */}
         <div className="flex gap-2 overflow-x-auto">
