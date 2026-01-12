@@ -45,65 +45,78 @@ export function Sidebar({ currentView, onNavigate, isMobileMenuOpen, setIsMobile
             {/* Mobile Overlay */}
             {isMobileMenuOpen && (
                 <div
-                    className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+                    className="fixed inset-0 bg-black/60 z-40 lg:hidden backdrop-blur-sm transition-all"
                     onClick={() => setIsMobileMenuOpen(false)}
                 />
             )}
 
             {/* Sidebar Container */}
             <aside className={`
-        fixed top-0 left-0 z-50 h-screen bg-[#2D3436] text-white transition-all duration-300 ease-in-out flex flex-col
-        ${isMobileMenuOpen ? 'w-64 translate-x-0' : 'w-64 -translate-x-full lg:translate-x-0 lg:w-20 lg:hover:w-64'}
-      `}>
+                fixed top-0 left-0 z-50 h-screen bg-[#2D3B45] text-white transition-all duration-300 ease-in-out flex flex-col border-r border-white/10
+                ${isMobileMenuOpen ? 'w-64 translate-x-0' : 'w-64 -translate-x-full lg:translate-x-0 lg:w-24 lg:hover:w-64'}
+                group
+            `}>
                 {/* Logo Area */}
-                <div className="h-16 flex items-center justify-center border-b border-gray-700">
-                    <GraduationCap className="w-8 h-8 text-blue-400" />
-                    <span className="ml-3 font-bold text-lg lg:hidden lg:group-hover:block transition-all duration-300 whitespace-nowrap overflow-hidden group-hover:block">
+                <div className="h-20 flex items-center px-6 border-b border-white/10">
+                    <div className="min-w-[40px] flex justify-center">
+                        <GraduationCap className="w-10 h-10 text-[#008EE2]" />
+                    </div>
+                    <span className="ml-4 font-bold text-xl lg:opacity-0 lg:group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
                         Mini LMS
                     </span>
                 </div>
 
                 {/* Navigation Items */}
-                <nav className="flex-1 py-6 space-y-2">
-                    {navItems.map((item) => (
-                        <button
-                            key={item.id}
-                            onClick={() => handleNavClick(item.id)}
-                            className={`
-                w-full flex items-center px-4 py-3 transition-colors relative group
-                ${currentView === item.id ? 'bg-[#0984E3] text-white' : 'text-gray-400 hover:text-white hover:bg-gray-800'}
-              `}
-                            title={item.label}
-                        >
-                            <item.icon className={`w-6 h-6 flex-shrink-0 ${currentView === item.id ? 'text-white' : ''}`} />
-                            <span className={`
-                ml-4 font-medium whitespace-nowrap transition-opacity duration-300
-                lg:opacity-0 lg:group-hover:opacity-100 lg:absolute lg:left-14
-                ${isMobileMenuOpen ? 'opacity-100' : ''}
-              `}>
-                                {item.label}
-                            </span>
+                <nav className="flex-1 py-8 space-y-1 px-3">
+                    {navItems.map((item) => {
+                        const isActive = currentView === item.id;
+                        return (
+                            <button
+                                key={item.id}
+                                onClick={() => handleNavClick(item.id)}
+                                className={`
+                                    w-full flex items-center px-4 py-4 rounded-xl transition-all relative group/item
+                                    ${isActive
+                                        ? 'bg-white text-[#2D3B45] shadow-lg scale-[1.02]'
+                                        : 'text-gray-300 hover:bg-white/10 hover:text-white'}
+                                `}
+                                title={item.label}
+                            >
+                                <div className="min-w-[40px] flex justify-center">
+                                    <item.icon className={`w-6 h-6 flex-shrink-0 transition-transform ${isActive ? 'scale-110' : ''}`} />
+                                </div>
+                                <span className={`
+                                    ml-4 font-semibold whitespace-nowrap transition-all duration-300
+                                    lg:opacity-0 lg:group-hover:opacity-100
+                                    ${isMobileMenuOpen ? 'opacity-100' : ''}
+                                `}>
+                                    {item.label}
+                                </span>
 
-                            {/* Active Indicator Bar (Canvas style) */}
-                            {currentView === item.id && (
-                                <div className="absolute left-0 top-0 bottom-0 w-1 bg-white" />
-                            )}
-                        </button>
-                    ))}
+                                {/* Active Indicator Bar (Canvas style) */}
+                                {isActive && !isMobileMenuOpen && (
+                                    <div className="absolute -left-3 top-2 bottom-2 w-1.5 bg-[#008EE2] rounded-r-full lg:hidden group-hover:block" />
+                                )}
+                            </button>
+                        );
+                    })}
                 </nav>
 
                 {/* User / Logout */}
-                <div className="p-4 border-t border-gray-700">
+                <div className="p-4 border-t border-white/10">
                     <button
                         onClick={signOut}
-                        className="w-full flex items-center justify-center p-2 text-gray-400 hover:text-white hover:bg-red-900/50 rounded-lg transition-colors group"
+                        className="w-full flex items-center px-4 py-4 text-gray-400 hover:text-white hover:bg-red-500/20 rounded-xl transition-all group/logout"
                         title="Sign Out"
                     >
-                        <LogOut className="w-5 h-5" />
+                        <div className="min-w-[40px] flex justify-center">
+                            <LogOut className="w-5 h-5 group-hover/logout:translate-x-1 transition-transform" />
+                        </div>
                         <span className={`
-               ml-3 lg:hidden lg:group-hover:inline-block whitespace-nowrap
-               ${isMobileMenuOpen ? 'inline-block' : 'hidden'}
-            `}>
+                            ml-4 font-medium transition-all duration-300
+                            lg:opacity-0 lg:group-hover:opacity-100
+                            ${isMobileMenuOpen ? 'opacity-100' : ''}
+                        `}>
                             Đăng xuất
                         </span>
                     </button>

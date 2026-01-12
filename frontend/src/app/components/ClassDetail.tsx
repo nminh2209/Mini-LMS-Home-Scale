@@ -5,6 +5,7 @@ import { AttendanceView } from "./AttendanceView";
 import { StudentList } from "./StudentList";
 import { AssignmentList } from "./AssignmentList";
 import { VocabularyList } from "./VocabularyList";
+import { QuizList } from "./QuizList";
 
 interface ClassDetailProps {
   classData: {
@@ -16,7 +17,7 @@ interface ClassDetailProps {
   onBack: () => void;
 }
 
-type Tab = "students" | "attendance" | "assignments" | "vocabulary";
+type Tab = "students" | "attendance" | "assignments" | "vocabulary" | "quizzes";
 
 export function ClassDetail({ classData, onBack }: ClassDetailProps) {
   const [activeTab, setActiveTab] = useState<Tab>("students");
@@ -26,6 +27,7 @@ export function ClassDetail({ classData, onBack }: ClassDetailProps) {
     { id: "attendance" as Tab, label: "Điểm danh", icon: ClipboardList },
     { id: "assignments" as Tab, label: "Bài tập", icon: BookOpen },
     { id: "vocabulary" as Tab, label: "Từ vựng", icon: Award },
+    { id: "quizzes" as Tab, label: "Kiểm tra", icon: ClipboardList },
   ];
 
   return (
@@ -97,6 +99,9 @@ export function ClassDetail({ classData, onBack }: ClassDetailProps) {
         )}
         {activeTab === "vocabulary" && (
           <VocabularyList classId={classData.id} />
+        )}
+        {activeTab === "quizzes" && (
+          <QuizList classId={classData.id} />
         )}
       </div>
     </div>

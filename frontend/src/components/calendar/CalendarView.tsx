@@ -5,7 +5,11 @@ import { Loader2, ChevronLeft, ChevronRight, Calculator, Calendar as CalendarIco
 import { format, startOfWeek, addDays, isSameDay } from "date-fns";
 import { vi } from "date-fns/locale";
 
-export function CalendarView() {
+interface CalendarViewProps {
+    onSelectClass: (cls: Class) => void;
+}
+
+export function CalendarView({ onSelectClass }: CalendarViewProps) {
     const [classes, setClasses] = useState<Class[]>([]);
     const [loading, setLoading] = useState(true);
     const [currentDate, setCurrentDate] = useState(new Date());
@@ -127,7 +131,14 @@ export function CalendarView() {
                         return (
                             <div key={dateKey} className={`p-2 space-y-2 ${isToday ? 'bg-blue-50/30' : ''}`}>
                                 {events.map((evt, idx) => (
-                                    <div key={idx} className="bg-white border-l-4 border-blue-500 shadow-sm p-2 rounded hover:shadow-md transition-all cursor-pointer">
+                                    <div
+                                        key={idx}
+                                        onClick={() => {
+                                            const cls = classes.find(c => c.id === evt.id);
+                                            if (cls) onSelectClass(cls);
+                                        }}
+                                        className="bg-white border-l-4 border-blue-500 shadow-sm p-2 rounded hover:shadow-md transition-all cursor-pointer"
+                                    >
                                         <div className="font-bold text-gray-900 text-sm">{evt.time}</div>
                                         <div className="font-medium text-blue-700 text-sm line-clamp-2 leading-tight">{evt.name}</div>
                                         <div className="text-[10px] text-gray-400 mt-1 uppercase tracking-wide">{evt.level}</div>

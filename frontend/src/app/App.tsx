@@ -10,6 +10,7 @@ import { supabase } from "../lib/supabase";
 import { useAuth } from "../contexts/AuthContext";
 import { Login } from "../components/auth/Login";
 import { AppLayout } from "../components/layout/AppLayout";
+import { OrchestrationOverview } from "./components/OrchestrationOverview";
 import { Class } from "../types/database"; // Use shared type
 
 export default function App() {
@@ -195,20 +196,28 @@ export default function App() {
   if (currentView === "dashboard" || currentView === "courses") {
     return (
       <AppLayout currentView={currentView} onNavigate={handleNavigate} title="Tổng Quan">
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
+        <div className="space-y-10">
+          <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Chào mừng trở lại!</h1>
-              <p className="text-gray-500">Bạn đang có {classes.length} lớp học đang hoạt động.</p>
+              <h1 className="text-3xl font-extrabold text-[#1A1F36] tracking-tight">Chào mừng trở lại!</h1>
+              <p className="text-gray-500 mt-2 font-medium flex items-center gap-2">
+                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                Bạn đang quản lý {classes.length} lớp học đang hoạt động.
+              </p>
             </div>
             <button
               onClick={() => setShowAddForm(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-[#0984E3] text-white rounded-lg hover:bg-blue-600 transition-colors shadow-sm font-medium"
+              className="flex items-center justify-center gap-3 px-6 py-3 bg-[#008EE2] text-white rounded-xl hover:bg-[#0077c0] hover:shadow-lg hover:-translate-y-0.5 transition-all shadow-sm font-bold text-sm uppercase tracking-wider"
             >
               <Plus className="w-5 h-5" />
               Tạo Lớp Mới
             </button>
-          </div>
+          </header>
+
+          <OrchestrationOverview
+            classes={classes}
+            onSelectClass={setSelectedClass}
+          />
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {classes.map((classData) => (
