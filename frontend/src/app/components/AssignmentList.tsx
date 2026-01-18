@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Plus, BookOpen, Calendar } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Plus, BookOpen, Calendar, X, Loader2, Info } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 
 interface Assignment {
@@ -55,7 +55,7 @@ export function AssignmentList({ classId }: AssignmentListProps) {
           class_id: classId,
           title: formData.title,
           description: formData.description,
-          due_date: formData.due_date || null // Handle empty date
+          due_date: formData.due_date || null
         }])
         .select()
         .single();
@@ -74,80 +74,90 @@ export function AssignmentList({ classId }: AssignmentListProps) {
   };
 
   if (loading) {
-    return <div className="flex justify-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>;
+    return (
+      <div className="flex flex-col items-center justify-center py-20">
+        <Loader2 className="w-10 h-10 text-[#008EE2] animate-spin mb-4" />
+        <p className="text-gray-400 font-bold uppercase text-[10px] tracking-widest">Đang tải danh sách bài tập...</p>
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-gray-900">
-          Bài tập ({assignments.length})
-        </h2>
+      <div className="flex items-center justify-between bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+        <div className="flex items-center gap-4">
+          <div className="p-3 bg-indigo-50 rounded-2xl text-indigo-600">
+            <BookOpen className="w-6 h-6" />
+          </div>
+          <div>
+            <h2 className="text-xl font-black text-[#1A1F36] tracking-tight">Bài Tập Về Nhà</h2>
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Tổng cộng {assignments.length} bài tập</p>
+          </div>
+        </div>
         <button
           onClick={() => setShowAddForm(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+          className="flex items-center gap-2 px-6 py-3 bg-[#1A1F36] text-white rounded-xl font-black text-xs uppercase tracking-widest hover:bg-[#2D334D] transition-all shadow-lg shadow-gray-200 active:scale-95"
         >
-          <Plus className="w-4 h-4" />
-          Giao bài tập
+          <Plus className="w-4 h-4 text-[#008EE2]" />
+          Giao Bài Mới
         </button>
       </div>
 
       {/* Add Form Modal */}
       {showAddForm && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
-          <div className="bg-white rounded-xl shadow-xl p-6 max-w-md w-full">
-            <h3 className="text-lg font-bold mb-4 text-gray-900">Giao bài tập mới</h3>
-            <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="fixed inset-0 bg-[#1A1F36]/60 backdrop-blur-md flex items-center justify-center p-4 z-[70] animate-in fade-in duration-300">
+          <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full border border-white/20 animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between mb-8">
+              <h3 className="text-2xl font-black text-[#1A1F36] tracking-tight">Giao Bài Tập</h3>
+              <button onClick={() => setShowAddForm(false)} className="p-2 hover:bg-gray-50 rounded-full transition-colors text-gray-300">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Tiêu đề *
-                </label>
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Tiêu Đề</label>
                 <input
                   type="text"
                   required
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Ví dụ: Unit 5 - Exercise 1-5"
+                  className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-[#008EE2] outline-none font-bold text-[#1A1F36] transition-all"
+                  placeholder="Ví dụ: Unit 5 - Homework"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Mô tả
-                </label>
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Mô Tả & Yêu Cầu</label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-[#008EE2] outline-none font-bold text-[#1A1F36] transition-all resize-none"
                   rows={4}
-                  placeholder="Mô tả chi tiết bài tập..."
+                  placeholder="Nêu chi tiết nội dung cần làm..."
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Hạn nộp
-                </label>
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Hạn Nộp</label>
                 <input
                   type="date"
                   value={formData.due_date}
                   onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-[#008EE2] outline-none font-bold text-[#1A1F36] transition-all"
                 />
               </div>
-              <div className="flex gap-3 pt-4">
+              <div className="flex gap-4 pt-4">
                 <button
                   type="button"
                   onClick={() => setShowAddForm(false)}
-                  className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors"
+                  className="flex-1 px-4 py-4 bg-gray-50 text-gray-500 font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-gray-100 transition-all"
                 >
-                  Hủy
+                  Hủy bỏ
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                  className="flex-1 px-4 py-4 bg-[#1A1F36] text-white font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-[#2D334D] shadow-xl shadow-gray-200 active:scale-95 transition-all text-center flex items-center justify-center"
                 >
-                  Giao bài
+                  Giao Bài
                 </button>
               </div>
             </form>
@@ -157,46 +167,54 @@ export function AssignmentList({ classId }: AssignmentListProps) {
 
       {/* Assignment List */}
       {assignments.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-xl border border-dashed border-gray-300">
-          <div className="inline-flex p-4 bg-gray-50 rounded-full mb-4">
-            <BookOpen className="w-8 h-8 text-gray-400" />
+        <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-gray-200">
+          <div className="inline-flex p-6 bg-gray-50 rounded-full mb-4 text-gray-300">
+            <BookOpen className="w-12 h-12" />
           </div>
-          <p className="text-gray-500 text-lg">Chưa có bài tập nào.</p>
+          <p className="text-gray-400 font-bold uppercase text-[10px] tracking-widest">Chưa có bài tập nào cho lớp học này</p>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 gap-6">
           {assignments.map((assignment) => (
             <div
               key={assignment.id}
-              className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 hover:border-blue-300 transition-colors"
+              className="bg-white rounded-[2rem] p-8 border border-gray-100 shadow-sm hover:shadow-xl hover:border-indigo-100 transition-all group"
             >
-              <div className="flex items-start justify-between">
+              <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
                 <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
-                      <BookOpen className="w-5 h-5" />
-                    </div>
-                    <h3 className="font-bold text-gray-900 text-lg">{assignment.title}</h3>
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-2 h-6 bg-indigo-500 rounded-full" />
+                    <h3 className="text-xl font-black text-[#1A1F36] group-hover:text-indigo-600 transition-colors uppercase tracking-tight">
+                      {assignment.title}
+                    </h3>
                   </div>
 
                   {assignment.description && (
-                    <p className="text-gray-600 mb-4 whitespace-pre-wrap pl-11">
-                      {assignment.description}
-                    </p>
+                    <div className="bg-indigo-50/30 p-6 rounded-2xl border border-indigo-50 mb-6">
+                      <div className="flex gap-3">
+                        <Info className="w-5 h-5 text-indigo-400 shrink-0 mt-0.5" />
+                        <p className="text-gray-600 leading-relaxed font-medium">
+                          {assignment.description}
+                        </p>
+                      </div>
+                    </div>
                   )}
 
-                  <div className="flex items-center gap-6 text-sm text-gray-500 pl-11">
+                  <div className="flex flex-wrap items-center gap-4">
                     {assignment.due_date && (
-                      <div className="flex items-center gap-1.5 text-red-600 bg-red-50 px-2 py-1 rounded">
+                      <div className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-xl border border-red-100">
                         <Calendar className="w-4 h-4" />
-                        <span className="font-medium">
+                        <span className="text-[10px] font-black uppercase tracking-widest whitespace-nowrap">
                           Hạn: {new Date(assignment.due_date).toLocaleDateString("vi-VN")}
                         </span>
                       </div>
                     )}
-                    <span className="text-gray-400">
-                      Đã giao: {new Date(assignment.created_at).toLocaleDateString("vi-VN")}
-                    </span>
+                    <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 text-gray-400 rounded-xl border border-gray-100">
+                      <Clock className="w-4 h-4 text-gray-300" />
+                      <span className="text-[10px] font-black uppercase tracking-widest whitespace-nowrap">
+                        Giao ngày: {new Date(assignment.created_at).toLocaleDateString("vi-VN")}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>

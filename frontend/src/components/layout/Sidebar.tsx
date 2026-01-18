@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import {
     LayoutDashboard,
     BookOpen,
@@ -9,7 +9,8 @@ import {
     X,
     GraduationCap,
     DollarSign,
-    UserCheck
+    UserCheck,
+    HelpCircle
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -30,6 +31,7 @@ export function Sidebar({ currentView, onNavigate, isMobileMenuOpen, setIsMobile
         { id: 'tuition', label: 'Học phí', icon: DollarSign },
         { id: 'calendar', label: 'Lịch biểu', icon: Calendar },
         { id: 'inbox', label: 'Hộp thư', icon: Inbox },
+        { id: 'help', label: 'Hướng dẫn', icon: HelpCircle },
     ];
 
     // Add Admin Tab if user is admin

@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Plus, GraduationCap, Loader2 } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Plus, GraduationCap, Loader2, Clock } from "lucide-react";
 import { ClassCard } from "./components/ClassCard";
 import { ClassDetail } from "./components/ClassDetail";
 import { AdminDashboard } from "../components/admin/AdminDashboard";
@@ -12,6 +12,7 @@ import { Login } from "../components/auth/Login";
 import { AppLayout } from "../components/layout/AppLayout";
 import { OrchestrationOverview } from "./components/OrchestrationOverview";
 import { AttendanceManager } from "../components/attendance/AttendanceManager";
+import { HelpGuide } from "./components/HelpGuide";
 import { Class } from "../types/database"; // Use shared type
 
 export default function App() {
@@ -24,6 +25,7 @@ export default function App() {
   const [classes, setClasses] = useState<Class[]>([]);
   const [selectedClass, setSelectedClass] = useState<Class | null>(null);
   const [loading, setLoading] = useState(true);
+  const [studentCounts, setStudentCounts] = useState<Record<string, number>>({});
 
   // UI State
   const [showAddForm, setShowAddForm] = useState(false);
@@ -85,6 +87,29 @@ export default function App() {
     }
   };
 
+  useEffect(() => {
+    if (classes.length > 0) {
+      fetchStudentCounts();
+    }
+  }, [classes]);
+
+  const fetchStudentCounts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('students')
+        .select('class_id');
+
+      if (error) throw error;
+      const counts: Record<string, number> = {};
+      (data || []).forEach(s => {
+        counts[s.class_id] = (counts[s.class_id] || 0) + 1;
+      });
+      setStudentCounts(counts);
+    } catch (error) {
+      console.error("Error fetching student counts:", error);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
@@ -104,8 +129,6 @@ export default function App() {
       if (error) throw error;
 
       if (data) {
-        setClasses([data, ...classes]);
-        setShowAddForm(false);
         setClasses([data, ...classes]);
         setShowAddForm(false);
         setFormData({ name: "", schedule: "", level: "" });
@@ -201,6 +224,14 @@ export default function App() {
     );
   }
 
+  if (currentView === "help") {
+    return (
+      <AppLayout currentView="help" onNavigate={handleNavigate} title="Hướng Dẫn Sử Dụng">
+        <HelpGuide />
+      </AppLayout>
+    );
+  }
+
   // View: Dashboard / Courses List
   if (currentView === "dashboard" || currentView === "courses") {
     return (
@@ -233,7 +264,7 @@ export default function App() {
               <ClassCard
                 key={classData.id}
                 classData={classData}
-                studentCount={0} // TODO: Fetch count separately or join
+                studentCount={studentCounts[classData.id] || 0}
                 onClick={() => setSelectedClass(classData)}
               />
             ))}
@@ -250,36 +281,43 @@ export default function App() {
 
         {/* Add Class Modal - keeping it simple for now */}
         {showAddForm && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[60]">
-            <div className="bg-white rounded-xl shadow-xl p-6 max-w-md w-full animate-in fade-in zoom-in duration-200">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Tạo Lớp Học Mới</h3>
-              <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="fixed inset-0 bg-[#1A1F36]/60 backdrop-blur-md flex items-center justify-center p-4 z-[70] animate-in fade-in duration-300">
+            <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full animate-in zoom-in-95 duration-200 border border-white/20">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-2xl font-black text-[#1A1F36] tracking-tight">Tạo Lớp Học Mới</h3>
+                <button onClick={() => setShowAddForm(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-400">
+                  <Plus className="w-6 h-6 rotate-45" />
+                </button>
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Tên Lớp</label>
+                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Tên Lớp học</label>
                   <input
                     type="text"
                     required
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-[#008EE2] outline-none font-bold text-[#1A1F36] transition-all"
                     placeholder="VD: Tiếng Anh 12 - Nâng cao"
                   />
                 </div>
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Lịch Học</label>
+                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Lịch Học Định Kỳ</label>
 
                   {/* Day Picker */}
-                  <div className="flex gap-2 mb-3 overflow-x-auto pb-2">
+                  <div className="flex gap-2 mb-4 overflow-x-auto py-1 px-1 no-scrollbar">
                     {daysOfWeek.map(day => (
                       <button
                         key={day}
                         type="button"
                         onClick={() => toggleDay(day)}
                         className={`
-                            w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all border
+                            min-w-[42px] h-[42px] rounded-xl flex items-center justify-center text-xs font-black transition-all border
                             ${selectedDays.includes(day)
-                            ? 'bg-blue-600 text-white border-blue-600 shadow-md scale-105'
-                            : 'bg-white text-gray-600 border-gray-200 hover:border-blue-400 hover:bg-blue-50'}
+                            ? 'bg-[#008EE2] text-white border-[#008EE2] shadow-lg shadow-blue-200 scale-105'
+                            : 'bg-white text-gray-400 border-gray-100 hover:border-[#008EE2] hover:text-[#008EE2]'}
                           `}
                       >
                         {day}
@@ -293,36 +331,39 @@ export default function App() {
                       type="time"
                       value={selectedTime}
                       onChange={(e) => setSelectedTime(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-[#008EE2] outline-none font-bold text-[#1A1F36]"
                     />
-                    <div className="text-xs text-gray-500 mt-1 pl-1">
-                      Kết quả: {formData.schedule || "(Chọn ngày và giờ)"}
+                    <div className="flex items-center gap-2 mt-2 ml-1 text-[10px] font-bold text-[#008EE2] bg-blue-50/50 w-fit px-2 py-1 rounded-md border border-blue-100/50">
+                      <Clock className="w-3 h-3" />
+                      {formData.schedule || "Chọn ngày và giờ học"}
                     </div>
                   </div>
                 </div>
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Cấp Độ / Khối Lớp</label>
+                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Cấp Độ / Khối Lớp</label>
                   <input
                     type="text"
                     value={formData.level}
                     onChange={(e) => setFormData({ ...formData, level: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-[#008EE2] outline-none font-bold text-[#1A1F36] transition-all"
                     placeholder="VD: IELTS 5.0"
                   />
                 </div>
-                <div className="flex gap-3 pt-4">
+
+                <div className="flex gap-4 pt-4">
                   <button
                     type="button"
                     onClick={() => setShowAddForm(false)}
-                    className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200"
+                    className="flex-1 px-4 py-4 bg-gray-50 text-gray-500 font-black text-xs uppercase tracking-widest rounded-xl hover:bg-gray-100 transition-all"
                   >
-                    Hủy
+                    Hủy bỏ
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 px-4 py-2 bg-[#0984E3] text-white font-medium rounded-lg hover:bg-blue-600"
+                    className="flex-1 px-4 py-4 bg-[#0984E3] text-white font-black text-xs uppercase tracking-widest rounded-xl hover:bg-blue-600 shadow-lg shadow-blue-100 active:scale-95 transition-all"
                   >
-                    Tạo Lớp
+                    Tạo Lớp Ngay
                   </button>
                 </div>
               </form>

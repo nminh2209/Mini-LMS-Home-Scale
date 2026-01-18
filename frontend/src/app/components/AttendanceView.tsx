@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Check, X, Clock, Calendar, Save } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Check, X, Clock, Calendar, Save, Loader2, Users } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 
 interface Student {
@@ -30,7 +30,6 @@ export function AttendanceView({ classId }: AttendanceViewProps) {
   const fetchData = async () => {
     setLoading(true);
     try {
-      // 1. Fetch Students
       const { data: studentsData } = await supabase
         .from('students')
         .select('id, name')
@@ -39,22 +38,17 @@ export function AttendanceView({ classId }: AttendanceViewProps) {
 
       setStudents(studentsData || []);
 
-      // 2. Fetch Attendance for Date
       const { data: attendanceData } = await supabase
         .from('attendance')
         .select('student_id, status')
         .eq('class_id', classId)
         .eq('date', selectedDate);
 
-      // Initialize map
       const initialMap: Record<string, "present" | "absent" | "late"> = {};
-
-      // Default to 'present' for all students
       (studentsData || []).forEach(s => {
         initialMap[s.id] = 'present';
       });
 
-      // Override with actual data
       (attendanceData || []).forEach((record: any) => {
         initialMap[record.student_id] = record.status;
       });
@@ -69,16 +63,13 @@ export function AttendanceView({ classId }: AttendanceViewProps) {
   };
 
   const handleStatusChange = (studentId: string, status: "present" | "absent" | "late") => {
-    setAttendance(prev => ({ ...prev, [studentId]: status }));
+    setAttendance((prev: Record<string, "present" | "absent" | "late">) => ({ ...prev, [studentId]: status }));
     setSaved(false);
   };
 
   const handleSave = async () => {
     setSaving(true);
     try {
-      // Upsert: We basically delete old records for this day and re-insert, or careful upsert.
-      // Easiest valid way for bulk upsert in Supabase with composite key unique constraint:
-
       const records = Object.entries(attendance).map(([studentId, status]) => ({
         class_id: classId,
         student_id: studentId,
@@ -103,7 +94,12 @@ export function AttendanceView({ classId }: AttendanceViewProps) {
   };
 
   if (loading) {
-    return <div className="flex justify-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>;
+    return (
+      <div className="flex flex-col items-center justify-center py-20">
+        <Loader2 className="w-10 h-10 text-[#008EE2] animate-spin mb-4" />
+        <p className="text-gray-400 font-bold uppercase text-[10px] tracking-widest">Đang tải dữ liệu điểm danh...</p>
+      </div>
+    );
   }
 
   const presentCount = Object.values(attendance).filter(s => s === "present").length;
@@ -111,104 +107,156 @@ export function AttendanceView({ classId }: AttendanceViewProps) {
   const lateCount = Object.values(attendance).filter(s => s === "late").length;
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-        <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-          <Calendar className="w-6 h-6 text-blue-600" />
-          Điểm danh
-        </h2>
-        <div className="flex items-center gap-3">
+    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      {/* Header Controls */}
+      <div className="flex flex-col md:flex-row items-center justify-between gap-6 bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+        <div className="flex items-center gap-4">
+          <div className="p-3 bg-blue-50 rounded-2xl text-[#008EE2]">
+            <Calendar className="w-6 h-6" />
+          </div>
+          <div>
+            <h2 className="text-xl font-black text-[#1A1F36] tracking-tight">Điểm Danh Lớp</h2>
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Chọn ngày và cập nhật trạng thái</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4 w-full md:w-auto">
           <input
             type="date"
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+            className="flex-1 md:flex-none px-5 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-[#008EE2] outline-none font-bold text-[#1A1F36] transition-all"
           />
           <button
             onClick={handleSave}
             disabled={saving}
-            className={`flex items-center gap-2 px-6 py-2 rounded-lg font-bold transition-all transform active:scale-95 shadow-lg ${saved
-                ? "bg-green-500 text-white"
-                : "bg-blue-600 text-white hover:bg-blue-700"
-              }`}
+            className={`
+              flex items-center justify-center gap-2 px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-xl active:scale-95
+              ${saved
+                ? "bg-green-500 text-white shadow-green-100"
+                : "bg-[#1A1F36] text-white shadow-gray-200 hover:bg-[#2D334D]"
+              }
+            `}
           >
-            {saving ? <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" /> : <Save className="w-5 h-5" />}
-            {saved ? "Đã lưu!" : "Lưu"}
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : (saved ? <Check className="w-4 h-4" /> : <Save className="w-4 h-4" />)}
+            {saved ? "Đã Lưu" : (saving ? "Đang Lưu..." : "Lưu Bảng Tên")}
           </button>
         </div>
       </div>
 
-      {/* Statistics */}
-      <div className="grid grid-cols-3 gap-4">
-        <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex flex-col items-center justify-center">
-          <div className="flex items-center gap-2 text-green-700 font-semibold mb-1">
-            <Check className="w-5 h-5" />
-            Có mặt
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center justify-between group hover:border-green-100 transition-all">
+          <div className="flex items-center gap-4">
+            <div className="p-4 bg-green-50 rounded-2xl text-green-600 group-hover:scale-110 transition-transform">
+              <Check className="w-6 h-6" />
+            </div>
+            <div>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Có mặt</p>
+              <p className="text-2xl font-black text-[#1A1F36]">{presentCount}</p>
+            </div>
           </div>
-          <span className="text-3xl font-bold text-green-800">{presentCount}</span>
+          <div className="text-green-500 font-black text-xs bg-green-50 px-3 py-1 rounded-full border border-green-100 uppercase tracking-wider">
+            {Math.round((presentCount / (students.length || 1)) * 100)}%
+          </div>
         </div>
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex flex-col items-center justify-center">
-          <div className="flex items-center gap-2 text-red-700 font-semibold mb-1">
-            <X className="w-5 h-5" />
-            Vắng
+
+        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center justify-between group hover:border-yellow-100 transition-all">
+          <div className="flex items-center gap-4">
+            <div className="p-4 bg-yellow-50 rounded-2xl text-yellow-600 group-hover:scale-110 transition-transform">
+              <Clock className="w-6 h-6" />
+            </div>
+            <div>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Đi muộn</p>
+              <p className="text-2xl font-black text-[#1A1F36]">{lateCount}</p>
+            </div>
           </div>
-          <span className="text-3xl font-bold text-red-800">{absentCount}</span>
+          <div className="text-yellow-500 font-black text-xs bg-yellow-50 px-3 py-1 rounded-full border border-yellow-100 uppercase tracking-wider">
+            {Math.round((lateCount / (students.length || 1)) * 100)}%
+          </div>
         </div>
-        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 flex flex-col items-center justify-center">
-          <div className="flex items-center gap-2 text-yellow-700 font-semibold mb-1">
-            <Clock className="w-5 h-5" />
-            Đi muộn
+
+        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center justify-between group hover:border-red-100 transition-all">
+          <div className="flex items-center gap-4">
+            <div className="p-4 bg-red-50 rounded-2xl text-red-600 group-hover:scale-110 transition-transform">
+              <X className="w-6 h-6" />
+            </div>
+            <div>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Vắng mặt</p>
+              <p className="text-2xl font-black text-[#1A1F36]">{absentCount}</p>
+            </div>
           </div>
-          <span className="text-3xl font-bold text-yellow-800">{lateCount}</span>
+          <div className="text-red-500 font-black text-xs bg-red-50 px-3 py-1 rounded-full border border-red-100 uppercase tracking-wider">
+            {Math.round((absentCount / (students.length || 1)) * 100)}%
+          </div>
         </div>
       </div>
 
-      {/* Student List */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      {/* Student Attendance List */}
+      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="px-8 py-6 border-b border-gray-50 flex items-center gap-3">
+          <Users className="w-5 h-5 text-[#008EE2]" />
+          <h3 className="text-lg font-black text-[#1A1F36] tracking-tight uppercase tracking-widest text-sm">Danh sách chi tiết</h3>
+        </div>
+
         {students.length === 0 ? (
-          <div className="text-center py-12 text-gray-500">
-            Chưa có học viên nào trong lớp này. Vui lòng thêm học viên trước.
+          <div className="text-center py-20">
+            <p className="text-gray-400 font-bold uppercase text-[10px] tracking-widest">Không có học viên nào để điểm danh</p>
           </div>
         ) : (
-          <div className="divide-y divide-gray-100">
-            {students.map((student) => (
-              <div
-                key={student.id}
-                className="p-4 flex flex-col sm:flex-row items-center justify-between gap-4 hover:bg-gray-50 transition-colors"
-              >
-                <div className="font-bold text-gray-900 text-lg">{student.name}</div>
-                <div className="flex p-1 bg-gray-100 rounded-lg">
-                  <button
-                    onClick={() => handleStatusChange(student.id, "present")}
-                    className={`px-4 py-2 rounded-md font-medium transition-all ${attendance[student.id] === "present"
-                        ? "bg-white text-green-700 shadow-sm ring-1 ring-green-200"
-                        : "text-gray-500 hover:text-gray-700"
-                      }`}
-                  >
-                    Có mặt
-                  </button>
-                  <button
-                    onClick={() => handleStatusChange(student.id, "late")}
-                    className={`px-4 py-2 rounded-md font-medium transition-all ${attendance[student.id] === "late"
-                        ? "bg-white text-yellow-700 shadow-sm ring-1 ring-yellow-200"
-                        : "text-gray-500 hover:text-gray-700"
-                      }`}
-                  >
-                    Muộn
-                  </button>
-                  <button
-                    onClick={() => handleStatusChange(student.id, "absent")}
-                    className={`px-4 py-2 rounded-md font-medium transition-all ${attendance[student.id] === "absent"
-                        ? "bg-white text-red-700 shadow-sm ring-1 ring-red-200"
-                        : "text-gray-500 hover:text-gray-700"
-                      }`}
-                  >
-                    Vắng
-                  </button>
+          <div className="divide-y divide-gray-50">
+            {students.map((student) => {
+              const status = attendance[student.id];
+              return (
+                <div key={student.id} className="px-8 py-6 flex flex-col sm:flex-row items-center justify-between gap-6 hover:bg-gray-50/50 transition-colors">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-gray-400 font-black">
+                      {student.name.charAt(0)}
+                    </div>
+                    <span className="font-black text-[#1A1F36] text-lg">{student.name}</span>
+                  </div>
+
+                  <div className="flex p-1.5 bg-gray-100 rounded-2xl w-full sm:w-auto">
+                    <button
+                      onClick={() => handleStatusChange(student.id, "present")}
+                      className={`
+                        flex-1 sm:flex-none px-6 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all
+                        ${status === "present"
+                          ? "bg-white text-green-600 shadow-md shadow-gray-200 border border-green-50"
+                          : "text-gray-400 hover:text-gray-600"
+                        }
+                      `}
+                    >
+                      Có mặt
+                    </button>
+                    <button
+                      onClick={() => handleStatusChange(student.id, "late")}
+                      className={`
+                        flex-1 sm:flex-none px-6 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all
+                        ${status === "late"
+                          ? "bg-white text-yellow-500 shadow-md shadow-gray-200 border border-yellow-50"
+                          : "text-gray-400 hover:text-gray-600"
+                        }
+                      `}
+                    >
+                      Đi muộn
+                    </button>
+                    <button
+                      onClick={() => handleStatusChange(student.id, "absent")}
+                      className={`
+                        flex-1 sm:flex-none px-6 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all
+                        ${status === "absent"
+                          ? "bg-white text-red-500 shadow-md shadow-gray-200 border border-red-50"
+                          : "text-gray-400 hover:text-gray-600"
+                        }
+                      `}
+                    >
+                      Vắng mặt
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
