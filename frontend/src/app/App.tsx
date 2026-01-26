@@ -13,6 +13,7 @@ import { AppLayout } from "../components/layout/AppLayout";
 import { OrchestrationOverview } from "./components/OrchestrationOverview";
 import { AttendanceManager } from "../components/attendance/AttendanceManager";
 import { HelpGuide } from "./components/HelpGuide";
+import { ManagementDashboard } from "../components/management/ManagementDashboard";
 import { Class } from "../types/database"; // Use shared type
 
 export default function App() {
@@ -204,6 +205,14 @@ export default function App() {
     return (
       <AppLayout currentView="tuition" onNavigate={handleNavigate} title="Quản Lý Học Phí">
         <TuitionManager />
+      </AppLayout>
+    );
+  }
+
+  if (currentView === "management") {
+    return (
+      <AppLayout currentView="management" onNavigate={handleNavigate} title="Quản Lý Hệ Thống">
+        <ManagementDashboard />
       </AppLayout>
     );
   }

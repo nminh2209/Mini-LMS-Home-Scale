@@ -10,7 +10,8 @@ import {
     GraduationCap,
     DollarSign,
     UserCheck,
-    HelpCircle
+    HelpCircle,
+    BarChart3
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -26,6 +27,7 @@ export function Sidebar({ currentView, onNavigate, isMobileMenuOpen, setIsMobile
 
     const navItems = [
         { id: 'dashboard', label: 'Bảng tin', icon: LayoutDashboard },
+        { id: 'management', label: 'Quản lý', icon: BarChart3 },
         { id: 'courses', label: 'Lớp học', icon: BookOpen },
         { id: 'attendance', label: 'Điểm danh', icon: UserCheck },
         { id: 'tuition', label: 'Học phí', icon: DollarSign },
